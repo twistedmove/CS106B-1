@@ -1,0 +1,528 @@
+/*
+ * File: gwindow.cpp
+ * -----------------
+ * This file implements the GWindow class, passing most calls directly
+ * to the appropriate methods in the Platform class, which is implemented
+ * separately for each architecture.
+ */
+
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include "console.h"
+#include "gevents.h"
+#include "gobjects.h"
+#include "gmath.h"
+#include "gtypes.h"
+#include "gwindow.h"
+#include "map.h"
+#include "strlib.h"
+#include "vector.h"
+#include "platform.h"
+using namespace std;
+
+/* Constants */
+
+static const int DEFAULT_WIDTH = 500;
+static const int DEFAULT_HEIGHT = 300;
+static const int CENTER_MAGIC_VALUE = 999999;
+
+// variables and functions for auditing calls to pause();
+// used to facilitate creation of autograde programs
+namespace autograder {
+static int gwindow_pauses = 0;
+static double gwindow_last_pauseMS = 0.0;
+static bool gwindow_pause_enabled = true;
+
+int gwindowGetNumPauses() {
+    return gwindow_pauses;
+}
+
+void gwindowResetNumPauses() {
+    gwindow_pauses = 0;
+}
+
+double gwindowGetLastPauseMS() {
+    return gwindow_last_pauseMS;
+}
+
+void gwindowResetLastPauseMS() {
+    gwindow_last_pauseMS = 0.0;
+}
+
+void gwindowSetPauseEnabled(bool value) {
+    gwindow_pause_enabled = value;
+}
+}
+
+/* Private function prototypes */
+
+static void initColorTable();
+static string canonicalColorName(string str);
+
+/*
+ * Global variable: pp
+ * -------------------
+ * This variable points to a singleton of the Platform class.
+ */
+
+static Platform *pp = getPlatform();
+
+/*
+ * Global variable: colorTable
+ * ---------------------------
+ * This variable holds the translation table that maps colors into
+ * their RGB values.  This color table is shared throughout the
+ * application and cannot be manipulated by any clients.  If you
+ * need to define color names for application specific colors, you
+ * should do so by defining string constants with the appropriate
+ * hexadecimal values, as in
+ *
+ *     const string MAGENTA = "0xFF00FF";
+ */
+
+static Map<string,int> colorTable;
+
+GWindow::GWindow() {
+    initGWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
+}
+
+GWindow::GWindow(bool visible) {
+    initGWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, visible);
+}
+
+GWindow::GWindow(double width, double height) {
+    initGWindow(width, height, true);
+}
+
+GWindow::GWindow(double width, double height, bool visible) {
+    initGWindow(width, height, visible);
+}
+
+void GWindow::initGWindow(double width, double height, bool visible) {
+    gwd = new GWindowData();
+    gwd->windowWidth = width;
+    gwd->windowHeight = height;
+    gwd->windowX = 0;
+    gwd->windowY = 0;
+    gwd->top = new GCompound();
+    gwd->closed = false;
+    gwd->exitOnClose = false;
+    gwd->repaintImmediately = true;
+    pp->createGWindow(*this, width, height, gwd->top);
+    setColor("BLACK");
+    setVisible(visible);
+    pause(1000); // Temporary fix for race condition in back-end.
+}
+
+GWindow::~GWindow() {
+    // commented out because for some reason it crashes to free this memory
+    //   if (gwd) {
+    //      if (gwd->top) {
+    //         delete gwd->top;
+    //         gwd->top = NULL;
+    //      }
+    //      delete gwd;
+    //   }
+}
+
+void GWindow::close() {
+    gwd->visible = false;
+    gwd->closed = true;
+    pp->close(*this);
+    pp->deleteGWindow(*this);
+    if (gwd->exitOnClose) {
+        // I was closed by the student's program.
+        // I need to inform JBE so that it will shut down.
+        pp->exitGraphics();
+        exit(0);
+    }
+}
+
+void GWindow::notifyOfClose() {
+    gwd->visible = false;
+    gwd->closed = true;
+    if (gwd->exitOnClose) {
+        // JBE notified me that I was closed by the user.
+        // JBE is already going to shut itself down.
+        // I just have to shut down the C++ process.
+        // pp->exitGraphics();
+        exit(0);
+    }
+}
+
+string GWindow::getWindowData() const {
+    ostringstream os;
+    os << gwd;
+    return os.str();
+}
+
+void GWindow::setExitOnClose(bool value) {
+    gwd->exitOnClose = value;
+    pp->setExitOnClose(*this, value);
+}
+
+void GWindow::setRepaintImmediately(bool value) {
+    gwd->repaintImmediately = value;
+}
+
+bool GWindow::isOpen() {
+    return !gwd || !gwd->closed;
+}
+
+void GWindow::requestFocus() {
+    if (isOpen()) {
+        pp->requestFocus(*this);
+    }
+}
+
+void GWindow::clear() {
+    if (isOpen()) {
+        gwd->top->removeAll();
+        pp->clear(*this);
+    }
+}
+
+void GWindow::repaint() {
+    if (isOpen()) {
+        pp->repaint(*this);
+    }
+}
+
+void GWindow::setVisible(bool flag) {
+    if (isOpen()) {
+        gwd->visible = flag;
+        pp->setVisible(*this, flag);
+    }
+}
+
+bool GWindow::isVisible() {
+    return gwd->visible;
+}
+
+void GWindow::drawLine(const GPoint & p0, const GPoint & p1) {
+    if (isOpen()) {
+        drawLine(p0.getX(), p0.getY(), p1.getX(), p1.getY());
+    }
+}
+
+void GWindow::drawLine(double x0, double y0, double x1, double y1) {
+    if (isOpen()) {
+        GLine line(x0, y0, x1, y1);
+        line.setColor(gwd->color);
+        draw(line);
+    }
+}
+
+GPoint GWindow::drawPolarLine(const GPoint & p0, double r, double theta) {
+    return drawPolarLine(p0.getX(), p0.getY(), r, theta);
+}
+
+GPoint GWindow::drawPolarLine(double x0, double y0, double r, double theta) {
+    double x1 = x0 + r * cosDegrees(theta);
+    double y1 = y0 - r * sinDegrees(theta);
+    drawLine(x0, y0, x1, y1);
+    return GPoint(x1, y1);
+}
+
+void GWindow::drawRect(const GRectangle & bounds) {
+    if (isOpen()) {
+        drawRect(bounds.getX(), bounds.getY(), bounds.getWidth(),
+                 bounds.getHeight());
+    }
+}
+
+void GWindow::drawRect(double x, double y, double width, double height) {
+    if (isOpen()) {
+        GRect rect(x, y, width, height);
+        rect.setColor(gwd->color);
+        draw(rect);
+    }
+}
+
+void GWindow::fillRect(const GRectangle & bounds) {
+    if (isOpen()) {
+        fillRect(bounds.getX(), bounds.getY(), bounds.getWidth(),
+                 bounds.getHeight());
+    }
+}
+
+void GWindow::fillRect(double x, double y, double width, double height) {
+    if (isOpen()) {
+        GRect rect(x, y, width, height);
+        rect.setColor(gwd->color);
+        rect.setFilled(true);
+        draw(rect);
+    }
+}
+
+void GWindow::drawOval(const GRectangle & bounds) {
+    if (isOpen()) {
+        drawOval(bounds.getX(), bounds.getY(), bounds.getWidth(),
+                 bounds.getHeight());
+    }
+}
+
+void GWindow::drawOval(double x, double y, double width, double height) {
+    if (isOpen()) {
+        GOval oval(x, y, width, height);
+        oval.setColor(gwd->color);
+        draw(oval);
+    }
+}
+
+void GWindow::fillOval(const GRectangle & bounds) {
+    if (isOpen()) {
+        fillOval(bounds.getX(), bounds.getY(), bounds.getWidth(),
+                 bounds.getHeight());
+    }
+}
+
+void GWindow::fillOval(double x, double y, double width, double height) {
+    if (isOpen()) {
+        GOval oval(x, y, width, height);
+        oval.setColor(gwd->color);
+        oval.setFilled(true);
+        draw(oval);
+    }
+}
+
+void GWindow::setColor(string color) {
+    setColor(convertColorToRGB(color));
+}
+
+void GWindow::setColor(int rgb) {
+    if (gwd != NULL) {
+        gwd->color = convertRGBToColor(rgb);
+    }
+}
+
+string GWindow::getColor() {
+    return gwd->color;
+}
+
+double GWindow::getWidth() {
+    return gwd->windowWidth;
+}
+
+double GWindow::getHeight() {
+    return gwd->windowHeight;
+}
+
+void GWindow::setSize(int width, int height) {
+    if (isOpen()) {
+        pp->setWindowSize(*this, width, height);
+    }
+}
+
+void GWindow::setWindowTitle(string title) {
+    if (isOpen()) {
+        gwd->windowTitle = title;
+        pp->setWindowTitle(*this, title);
+    }
+}
+
+void GWindow::setLocation(int x, int y) {
+    if (isOpen()) {
+        gwd->windowX = x;
+        gwd->windowY = y;
+        pp->setWindowLocation(*this, x, y);
+    }
+}
+
+void GWindow::center() {
+    // TODO: doesn't set gwd->windowX or windowY properly
+    setLocation(CENTER_MAGIC_VALUE, CENTER_MAGIC_VALUE);
+}
+
+string GWindow::getWindowTitle() {
+    return gwd->windowTitle;
+}
+
+void GWindow::draw(const GObject & gobj) {
+    if (isOpen()) {
+        draw(&gobj);
+    }
+}
+
+void GWindow::draw(GObject *gobj) {
+    if (isOpen()) {
+        if (!gwd || gwd->repaintImmediately) {
+            pp->draw(*this, gobj);
+        } else {
+            pp->drawInBackground(*this, gobj);
+        }
+    }
+}
+
+void GWindow::draw(const GObject *gobj) {
+    if (isOpen()) {
+        if (!gwd || gwd->repaintImmediately) {
+            pp->draw(*this, gobj);
+        } else {
+            pp->drawInBackground(*this, gobj);
+        }
+    }
+}
+
+void GWindow::draw(GObject & gobj, double x, double y) {
+    if (isOpen()) {
+        draw(&gobj, x, y);
+    }
+}
+
+void GWindow::draw(GObject *gobj, double x, double y) {
+    if (isOpen()) {
+        gobj->setLocation(x, y);
+        if (!gwd || gwd->repaintImmediately) {
+            pp->draw(*this, gobj);
+        } else {
+            pp->drawInBackground(*this, gobj);
+        }
+    }
+}
+
+void GWindow::add(GObject *gobj) {
+    if (isOpen()) {
+        gwd->top->add(gobj);
+    }
+}
+
+void GWindow::add(GObject *gobj, double x, double y) {
+    if (isOpen()) {
+        gobj->setLocation(x, y);
+        add(gobj);
+    }
+}
+
+void GWindow::addToRegion(GInteractor *gobj, string region) {
+    if (isOpen()) {
+        pp->addToRegion(*this, (GObject *) gobj, region);
+    }
+}
+
+void GWindow::addToRegion(GLabel *gobj, string region) {
+    if (isOpen()) {
+        pp->addToRegion(*this, (GObject *) gobj, region);
+    }
+}
+
+void GWindow::removeFromRegion(GInteractor *gobj, string region) {
+    if (isOpen()) {
+        pp->removeFromRegion(*this, (GObject *) gobj, region);
+    }
+}
+
+void GWindow::removeFromRegion(GLabel *gobj, string region) {
+    if (isOpen()) {
+        pp->removeFromRegion(*this, (GObject *) gobj, region);
+    }
+}
+
+void GWindow::remove(GObject *gobj) {
+    if (isOpen()) {
+        gwd->top->remove(gobj);
+    }
+}
+
+GObject *GWindow::getGObjectAt(double x, double y) {
+    int n = gwd->top->getElementCount();
+    for (int i = n - 1; i >= 0; i--) {
+        GObject *gobj = gwd->top->getElement(i);
+        if (gobj->contains(x, y)) return gobj;
+    }
+    return NULL;
+}
+
+void GWindow::setRegionAlignment(string region, string align) {
+    if (isOpen()) {
+        pp->setRegionAlignment(*this, region, align);
+    }
+}
+
+bool GWindow::operator==(GWindow w2) {
+    return gwd == w2.gwd;
+}
+
+bool GWindow::operator!=(GWindow w2) {
+    return gwd != w2.gwd;
+}
+
+GWindow::GWindow(GWindowData *gwd) {
+    this->gwd = gwd;
+}
+
+void pause(double milliseconds) {
+    if (autograder::gwindow_pause_enabled) {
+        pp->pause(milliseconds);
+    }
+    autograder::gwindow_pauses++;
+    autograder::gwindow_last_pauseMS = milliseconds;
+}
+
+double getScreenWidth() {
+    return pp->getScreenWidth();
+}
+
+double getScreenHeight() {
+    return pp->getScreenHeight();   // BUGBUG: was returning getScreenWidth
+}
+
+int convertColorToRGB(string colorName) {
+    if (colorName == "") return -1;
+    if (colorName[0] == '#') {
+        istringstream is(colorName.substr(1) + "@");
+        int rgb;
+        char terminator = '\0';
+        is >> hex >> rgb >> terminator;
+        if (terminator != '@') error("setColor: Illegal color - " + colorName);
+        return rgb;
+    }
+    string name = canonicalColorName(colorName);
+    if (colorTable.size() == 0) initColorTable();
+    if (!colorTable.containsKey(name)) {
+        error("setColor: Undefined color - " + colorName);
+    }
+    return colorTable[name];
+}
+
+string convertRGBToColor(int rgb) {
+    if (rgb == -1) return "";
+    ostringstream os;
+    os << hex << setfill('0') << uppercase << "#";
+    os << setw(2) << (rgb >> 16 & 0xFF);
+    os << setw(2) << (rgb >> 8 & 0xFF);
+    os << setw(2) << (rgb & 0xFF);
+    return os.str();
+}
+
+void exitGraphics() {
+    pp->exitGraphics();
+}
+
+static void initColorTable() {
+    colorTable["black"] = 0x000000;
+    colorTable["darkgray"] = 0x595959;
+    colorTable["gray"] = 0x999999;
+    colorTable["lightgray"] = 0xBFBFBF;
+    colorTable["white"] = 0xFFFFFF;
+    colorTable["red"] = 0xFF0000;
+    colorTable["yellow"] = 0xFFFF00;
+    colorTable["green"] = 0x00FF00;
+    colorTable["cyan"] = 0x00FFFF;
+    colorTable["blue"] = 0x0000FF;
+    colorTable["magenta"] = 0xFF00FF;
+    colorTable["orange"] = 0xFFC800;
+    colorTable["pink"] = 0xFFAFAF;
+}
+
+static string canonicalColorName(string str) {
+    string result = "";
+    int nChars = str.length();
+    for (int i = 0; i < nChars; i++) {
+        char ch = str[i];
+        if (!isspace(ch) && ch != '_') result += tolower(ch);
+    }
+    return result;
+}

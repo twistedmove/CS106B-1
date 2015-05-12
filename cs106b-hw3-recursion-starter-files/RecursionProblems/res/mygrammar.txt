@@ -1,0 +1,5 @@
+<adj>::=wonderful|beautiful|outstanding|depressing|joyful|peaceful
+<adv>::=besides|therefore|meanwhile|still|thus|moreover|however
+<n>::=food|drink|clothes|professor|college|insight
+<v>::=conduct|perform|challenge|experience|cancel|violate
+<p>::=in|from|out|inside|outside

@@ -25,15 +25,14 @@ int convertStringToInteger(string exp) {
     if (exp[0] == '-')
         return -convertStringToInteger(exp.substr(1));
     else
-        return convertStringToInteger(exp.substr(0, exp.length() - 1)) * 10
-                + (exp[exp.length() - 1] - '0');
+        return convertStringToInteger(exp.substr(0, exp.length() - 1)) * 10 + (exp[exp.length() - 1] - '0');
 }
 
 bool isBalanced(string exp) {
     if (exp.length() == 0)
         return true;
 
-    size_t i, original_length = exp.length();
+    int i, original_length = exp.length();
     i = exp.find("()");
     if (i != exp.npos)
         exp.erase(i, 2);
@@ -77,7 +76,7 @@ void floodFill(int x, int y, int width, int height, int color) {
         floodFill(x, y - 1, width, height, color);
 }
 
-int stringToId(string s, vector<vector<vector<int> > > &bnf, map<string, int> &f_map, vector<string> &rev_map)
+int stringToId(string s, vector<vector<vector<int> > >& bnf, map<string, int>& f_map, vector<string>& rev_map)
 {
     if (f_map.count(s) > 0)
         return f_map.find(s)->second;
@@ -90,7 +89,7 @@ int stringToId(string s, vector<vector<vector<int> > > &bnf, map<string, int> &f
     return id;
 }
 
-void grammar_helper(vector<vector<vector<int> > > &bnf, int start, vector<int> &result)
+void grammar_helper(vector<vector<vector<int> > >& bnf, int start, vector<int>& result)
 {
     if (bnf[start].size() == 0)
     {
@@ -114,24 +113,22 @@ Vector<string> grammarGenerate(istream& input, string symbol, int times) {
     string line;
     while (getline(input, line))
     {
-        size_t delim = line.find("::=");
+        int delim = line.find("::=");
         string non_term = line.substr(0, delim);
         if (f_map.count(non_term) == 1 && bnf[f_map.find(non_term)->second].size() > 0)
             throw string("duplicate non-terminal found");
-
         delim += 3;
         while (true)
         {
             int j = bnf[stringToId(non_term, bnf, f_map, rev_map)].size();
             bnf[stringToId(non_term, bnf, f_map, rev_map)].push_back(vector<int>());
 
-            size_t next_delim = line.find("|", delim);
+            int next_delim = line.find("|", delim);
             string production = line.substr(delim, next_delim == string::npos ? string::npos : next_delim - delim);
-
-            size_t last_space = 0;
+            int last_space = 0;
             while (true)
             {
-                size_t next_space = production.find(" ", last_space);
+                int next_space = production.find(" ", last_space);
                 string s = production.substr(last_space, next_space == string::npos ? string::npos : next_space - last_space);
                 int id1 = stringToId(non_term, bnf, f_map, rev_map);
                 int id2 = stringToId(s, bnf, f_map, rev_map);
@@ -140,7 +137,6 @@ Vector<string> grammarGenerate(istream& input, string symbol, int times) {
                     break;
                 last_space = next_space + 1;
             }
-
             if (next_delim == string::npos)
                 break;
             delim = next_delim + 1;

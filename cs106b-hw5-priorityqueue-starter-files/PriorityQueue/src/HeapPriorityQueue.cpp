@@ -33,28 +33,29 @@ int HeapPriorityQueue::parent(int i )const {
 void HeapPriorityQueue::down(int i) {
     if (lchild(i) >= len)
         return;
-    if (rchild(i) < len) {
+    else if (rchild(i) < len) {
         int t = min(data[lchild(i)].priority, data[rchild(i)].priority);
         if (data[i].priority > t) {
             if (data[lchild(i)].priority < data[rchild(i)].priority) {
                 swap(data[i], data[lchild(i)]);
                 down(lchild(i));
-            } if (data[lchild(i)].priority > data[rchild(i)].priority) {
+            }
+            else if (data[lchild(i)].priority > data[rchild(i)].priority) {
                 swap(data[i], data[rchild(i)]);
                 down(rchild(i));
             }
-            else {
+         else {
                 if (data[lchild(i)].value <= data[rchild(i)].value) {
                     swap(data[i], data[lchild(i)]);
                     down(lchild(i));
-            }
+                }
                 else {
                     swap(data[i], data[rchild(i)]);
                     down(rchild(i));
                 }
+            }
         }
     }
-  }
 }
 
 //helper function of bubbling up
@@ -66,7 +67,7 @@ void HeapPriorityQueue::up(int i){
 }
 
 void HeapPriorityQueue::changePriority(string value, int newPriority) {
-    for (int i = 0; i <len; ++i)
+    for (int i = 0; i <len; i++)
         if (data[i].value == value) {
             if (newPriority < data[i].priority)
             {
@@ -101,9 +102,9 @@ void HeapPriorityQueue::enqueue(string value, int priority) {
     if (len == capacity)
     {
         capacity *= 2;
-        PQEntry *tmp = data;
+        PQEntry* tmp = data;
         data = new PQEntry[capacity];
-        for (int i = 0; i < len; ++i)
+        for (int i = 0; i < len; i++)
             data[i] = tmp[i];
         delete[] tmp;
     }
@@ -132,7 +133,7 @@ int HeapPriorityQueue::size() const {
 
 ostream& operator<<(ostream& out, const HeapPriorityQueue& queue) {
     out <<"{";
-    for (int i = 0; i < queue.len; ++i) {
+    for (int i = 0; i < queue.len; i++) {
         out << "\"" << queue.data[i].value << "\":" <<queue.data[i].priority;
         if (i != queue.len - 1)
             out <<", ";

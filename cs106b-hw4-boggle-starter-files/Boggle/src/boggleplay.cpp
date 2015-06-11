@@ -10,8 +10,8 @@ using namespace BoggleGUI;
 // sets the GUI window back to its initial state
 void resetGUI(Boggle &boggle) {
     reset();
-    for (int i = 0; i < 4; ++i)
-        for (int j = 0; j < 4; ++j)
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
             labelCube(i, j, boggle.getLetter(i, j), false);
 }
 
@@ -20,10 +20,8 @@ void playOneGame(Lexicon& dictionary) {
     string ans = getLine("Do you want to generate a random board? ");
     string initial;
 
-
     if ((stringContains(ans,charToString('y')))||(stringContains(ans,charToString('Y'))))
         initial = "";
-
 
     if ((stringContains(ans,charToString('n')))||(stringContains(ans,charToString('N'))))
         initial = getLine("Type the 16 letters to appear on the board: ");
@@ -34,7 +32,6 @@ void playOneGame(Lexicon& dictionary) {
 
 //check whether it is a valid 16-letter board
     if ((ans.length()) == 16)//should be initial.length(), while loop
-
         cout << "That is not a valid 16-letter board string. Try again." << endl;
 
 //constructs a new Boggle
@@ -55,6 +52,7 @@ void playOneGame(Lexicon& dictionary) {
 
         if (input.length() == 0)
             break;
+
         if (boggle.humanWordSearch(input))
         {
             cout << boggle << endl;
@@ -74,5 +72,5 @@ void playOneGame(Lexicon& dictionary) {
     cout << "}" << endl;
     cout << "My score: " << boggle.getScoreComputer() << endl;
     cout << "Ha ha ha, I destroyed you. Better luck next time, puny human!" << endl;
-}
+    }
 }

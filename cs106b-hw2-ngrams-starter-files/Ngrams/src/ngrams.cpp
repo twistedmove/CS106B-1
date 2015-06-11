@@ -11,9 +11,9 @@
 #include "vector.h"
 
 using namespace std;
-bool operator<(const Vector<string> &v1, const Vector<string> &v2);
+bool operator < (const Vector<string>& v1, const Vector<string>& v2);
 
-bool operator<(const Vector<string> &v1, const Vector<string> &v2)
+bool operator < (const Vector<string>& v1, const Vector<string>& v2)
 {
     for (int i = 0; i < min(v1.size(), v2.size()); i++)
     {
@@ -65,8 +65,8 @@ int main() {
     for (int i = 0; i < N - 1; i++)
         window.add(words[i]);
 
-    Vector<Vector<string>> keys;
-    Map<Vector<string>, Vector<string>> map;
+    Vector<Vector<string> > keys;
+    Map<Vector<string>, Vector<string> > map;
     for (int i = 0, j = N - 1; i < words.size(); i++, j++)
     {
         Vector<string> v;
@@ -93,11 +93,10 @@ int main() {
         }
         else {
             window = keys[randomInteger(0, keys.size() - 1)];
-
             cout << "... ";
             for (int i = 0; i < window.size(); i++)
                 cout << window[i] << " ";
-            for (len -= (N - 1); len > 0; len--)
+            for (len = len - (N - 1); len > 0; len--)
             {
                 //look up all possible words
                 Vector<string> candidates = map.get(window);

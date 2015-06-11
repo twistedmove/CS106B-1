@@ -17,9 +17,8 @@ public:
     Set<string> computerWordSearch();
     int getScoreComputer(); //use the same library
 
-
 private:
-    Lexicon &dict;
+    Lexicon& dict;
     char grid[4][4];
     set<string> found_words;
     int human_score, computer_score;
@@ -28,10 +27,10 @@ private:
     int di[8] = {-1, -1, 0, 1, 1, 1, 0, -1}, dj[8] = {0, 1, 1, 1, 0, -1, -1, -1}; //use double loop 3-by-3
 
     bool searchWord(int row, int col, string word, int current, bool visited[4][4]);
-    void searchWord2(int row, int col, string word, bool visited[4][4], Set<string> &result);
+    void searchWord2(int row, int col, string word, bool visited[4][4], Set<string>& result);
     bool on_board(int i, int j);
 };
 
-ostream& operator<<(ostream& out, Boggle& boggle);
+ostream& operator << (ostream& out, Boggle& boggle);
 
 #endif

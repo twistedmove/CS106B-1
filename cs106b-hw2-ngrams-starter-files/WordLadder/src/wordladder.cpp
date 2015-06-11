@@ -48,7 +48,8 @@ int main() {
             else
                 break;
         }
-        if (quit) break;
+        if (quit)
+            break;
 
         string word2;
         while (true)
@@ -67,7 +68,8 @@ int main() {
             else
                 break;
         }
-        if (quit) break;
+        if (quit)
+            break;
 
         //invalid input: words should have the same length
         if (word1.length() != word2.length())
@@ -77,7 +79,7 @@ int main() {
         }
 
         //store partial letters that represent possibilities to explore
-        Queue<Stack<string>> q;
+        Queue<Stack<string> > q;
         Stack<string> s, ans;
         Set<string> visited;
         bool done = false;
@@ -90,7 +92,7 @@ int main() {
             string p = curr.peek();
 
             //loop which goes through each character index in the word
-            for (size_t i = 0; !done && i < p.length(); i++)
+            for (int i = 0; !done && i < p.length(); i++)
             //loop which goes through the letter alphabet a-z, replacing the character in the index position with each letter in turn
                 for (int c = 'a'; !done && c <= 'z'; c++)
                 {

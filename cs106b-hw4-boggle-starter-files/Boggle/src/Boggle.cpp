@@ -93,7 +93,7 @@ bool Boggle::searchWord(int row, int col, string word, int current, bool visited
 
     //double for loop
     bool found = false;
-    for (int r = 0; !found && r < 8; ++r) {
+    for (int r = 0; !found && r < 8; r++) {
         int oi = row + di[r], oj = col + dj[r];
         if (on_board(oi, oj) &&
             (searchWord(oi, oj, word, current + 1, visited)))
@@ -109,7 +109,7 @@ bool Boggle::searchWord(int row, int col, string word, int current, bool visited
 }
 
 //helper function for computerWordSearch()
-void Boggle::searchWord2(int row, int col, string word, bool visited[4][4], Set<string> &result) {
+void Boggle::searchWord2(int row, int col, string word, bool visited[4][4], Set<string>& result) {
     if (visited[row][col])
         return;
     word += getLetter(row, col);

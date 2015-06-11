@@ -156,7 +156,6 @@ void bulkEnqueue(T& queue) {
             string value = randomString(5);
             int priority = randomInteger(1, count);
             queue.enqueue(value, priority);
-            cout << "Enqueued \"" << value << "\" with priority " << priority << endl;
         }
     } else if (choice2 == "A" || choice2 == "D") {
         Vector<string> toAdd;

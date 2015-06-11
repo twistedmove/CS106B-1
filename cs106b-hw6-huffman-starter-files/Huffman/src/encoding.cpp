@@ -22,15 +22,15 @@ Map<int, int> buildFrequencyTable(istream& input) {
 
 class QueueNode {
 public:
-    HuffmanNode *tree;
+    HuffmanNode* tree;
     int timeStamp;
 
-    QueueNode(HuffmanNode *node, int ts) {
+    QueueNode(HuffmanNode* node, int ts) {
         this->tree = node;
         this->timeStamp = ts;
     }
 
-    bool operator<(const QueueNode &x) const {  //compare strings when count is the same
+    bool operator<(const QueueNode& x) const {  //compare strings when count is the same
         if (tree->count != x.tree->count)
             return tree->count > x.tree->count;
         else
@@ -87,14 +87,14 @@ void encodeData(istream& input, const Map<int, string>& encodingMap, obitstream&
     char c;
     while ((c = input.get()) != -1) {
         string s = encodingMap.get(c);
-        for (int i = 0; i < s.length(); ++i)
+        for (int i = 0; i < s.length(); i++)
             output.writeBit(s[i] - '0');
     }
 }
 
 void decodeData(ibitstream& input, HuffmanNode* encodingTree, ostream& output) {
     int bit;
-    HuffmanNode *curr = encodingTree;
+    HuffmanNode* curr = encodingTree;
     while ((bit = input.readBit()) != -1) {
         if (bit == 0 && curr->zero != NULL)
             curr = curr->zero;
@@ -116,7 +116,6 @@ void compress(istream& input, obitstream& output) {
     HuffmanNode* tree = buildEncodingTree(freqTable);
     Map<int, string> encodingMap = buildEncodingMap(tree);
     encodeData(input, encodingMap, output);
-    printSideways(tree,false,"");
 }
 
 void decompress(ibitstream& input, ostream& output) {
@@ -124,9 +123,6 @@ void decompress(ibitstream& input, ostream& output) {
     input >> freqTable;
     HuffmanNode* tree = buildEncodingTree(freqTable);
     decodeData(input, tree, output);
-    HuffmanNode* encodingTree;
-    cout << encodingTree <<endl;
-    printSideways(tree,false,"");
 }
 
 

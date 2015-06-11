@@ -9,13 +9,13 @@
 using namespace std;
 
 Vector<Vertex*> depthFirstSearch(BasicGraph& graph, Vertex* start, Vertex* end);
-bool depthFirstSearchHelper(Vertex* start, Vertex* end, Vector<Vertex*> &path);
+bool depthFirstSearchHelper(Vertex* start, Vertex* end, Vector<Vertex*>& path);
 Vector<Vertex*> breadthFirstSearch(BasicGraph& graph, Vertex* start, Vertex* end);
 Vector<Vertex*> dijkstrasAlgorithm(BasicGraph& graph, Vertex* start, Vertex* end);
 Vector<Vertex*> aStar(BasicGraph& graph, Vertex* start, Vertex* end);
-void ufs_init(Map<Vertex*, Vertex*> &parent, const Set<Vertex *> &vertices);
-Vertex* ufs_find(Map<Vertex*, Vertex*> &parent, Vertex* v);
-void ufs_union(Map<Vertex*, Vertex*> &parent, Vertex* v1, Vertex* v2);
+void ufs_init(Map<Vertex*, Vertex*>& parent, const Set<Vertex*>& vertices);
+Vertex* ufs_find(Map<Vertex*, Vertex*>& parent, Vertex* v);
+void ufs_union(Map<Vertex*, Vertex*>& parent, Vertex* v1, Vertex* v2);
 Set<Edge*> kruskal(BasicGraph& graph);
 
 Vector<Vertex*> depthFirstSearch(BasicGraph& graph, Vertex* start, Vertex* end) {

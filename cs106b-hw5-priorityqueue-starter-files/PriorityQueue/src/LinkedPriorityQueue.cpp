@@ -62,9 +62,7 @@ void LinkedPriorityQueue::enqueue(string value, int priority) {
         while((tmp->next != NULL) && (tmp->next->priority < priority || (tmp->next->priority == priority && tmp->next->value < value))){
             tmp = tmp->next;
         }
-
         tmp->next =  new ListNode(value, priority, tmp->next);
-
     }
     cout << "Enqueued \"" << value << "\" with priority " << priority << endl;
 }
